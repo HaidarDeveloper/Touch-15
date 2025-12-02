@@ -130,7 +130,7 @@ document.querySelector("form.formtiket").addEventListener("submit", async functi
   formData.append("simpan","1");
 
   try{
-    const res=await fetch("/api/insert",{method:"POST",body:formData});
+    const res = await fetch("/api/submit", {method: "POST",body: formData,});
     const result=await res.json();
     if(result.status==="success"){
       const kode=result.kode_unik;
