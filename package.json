@@ -5,6 +5,6 @@
   "dependencies": {
     "formidable": "^3.0.0",
     "pg": "^8.12.0",
-    "node-fetch": "^3.4.0"
+    "node-fetch": "^3.3.2"
   }
 }
