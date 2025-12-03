@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     multiples: true,
     keepExtensions: true,
     maxFileSize: 5 * 1024 * 1024, // 5 MB
-    fileWriteStreamHandler: () => null, // jangan simpan file fisik
+    // HAPUS fileWriteStreamHandler
   });
 
   form.parse(req, async (err, fields, files) => {
@@ -38,7 +38,6 @@ export default async function handler(req, res) {
         });
       }
 
-      // Hitung total harga
       const hargaTiket = 40000;
       let diskon = 0;
       if (jumlah >= 2) diskon = 0.025;
@@ -48,7 +47,6 @@ export default async function handler(req, res) {
 
       const total_harga = hargaTiket * jumlah * (1 - diskon);
 
-      // Data peserta
       const dataPeserta = [];
 
       for (let i = 1; i <= jumlah; i++) {
@@ -72,7 +70,7 @@ export default async function handler(req, res) {
           });
         }
 
-        // Ambil file sebagai Base64
+        // Ambil buffer file (formidable v3+)
         const buffer = await file.toBuffer();
         const base64 = buffer.toString("base64");
 
@@ -86,8 +84,8 @@ export default async function handler(req, res) {
         });
       }
 
-      // Simpan ke Neon (PostgreSQL)
       const client = await pool.connect();
+
       const insert = await client.query(
         `INSERT INTO tiket_pembelian (data_pembeli, jumlah_tiket, total_harga, kode_unik)
          VALUES ($1,$2,$3,$4) RETURNING id`,
@@ -108,6 +106,7 @@ export default async function handler(req, res) {
         status: "success",
         kode_unik: kode,
       });
+
     } catch (error) {
       return res.status(500).json({
         status: "error",
