@@ -95,3 +95,15 @@ export default async function handler(req, res) {
     });
   }
 }
+
+fetch('/api/daftar', request)
+  .then(async (res) => {
+    const txt = await res.text();
+    console.log("RAW RESPONSE:", txt); // <-- lihat ini
+    try {
+      return JSON.parse(txt);
+    } catch {
+      throw new Error("SERVER TIDAK MENGIRIM JSON");
+    }
+  })
+  .catch(err => alert(err.message));
