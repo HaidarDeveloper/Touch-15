@@ -2,17 +2,13 @@
   "name": "touch15-tryout",
   "version": "1.0.0",
   "description": "Website pendaftaran Try Out Touch 15",
-  "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "start": "vercel dev",
-    "build": "echo 'No build needed for static site'"
+    "start": "vercel dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.28.1",
     "formidable": "^3.7.0"
   },
-  "engines": {
-    "node": "20.x"
-  }
+  "engines": { "node": "20.x" }
 }
