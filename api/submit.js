@@ -1,10 +1,9 @@
+import { createClient } from "@supabase/supabase-js";
+import { Pool } from "pg";
 import formidable from "formidable";
 import fs from "fs";
-import { createClient } from "@supabase/supabase-js";
-import pkg from "pg";
-const { Pool } = pkg;
 
-// WAJIB: matikan bodyParser agar formidable bisa jalan
+// Vercel membutuhkan ini
 export const config = {
   api: {
     bodyParser: false,
@@ -16,79 +15,85 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-const pool = new Pool({
-  connectionString: process.env.NEON_DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 export default async function handler(req, res) {
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
+
   try {
-    // gunakan format baru formidable
     const form = formidable({
       multiples: true,
+      uploadDir: "/tmp", // WAJIB DI VERCEL
       keepExtensions: true,
     });
 
-    const parseForm = () =>
-      new Promise((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-          if (err) reject(err);
-          resolve({ fields, files });
-        });
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        resolve({ fields, files });
       });
+    });
 
-    const { fields, files } = await parseForm();
-
-    // --- proses upload semua file ---
-    let uploadedFiles = [];
-
-    for (const key in files) {
-      const f = files[key][0]; // ambil file pertama
-
-      const fileBuffer = fs.readFileSync(f.filepath);
-      const ext = f.originalFilename.split(".").pop();
-      const newName = `kartu/${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2)}.${ext}`;
-
-      const { data, error } = await supabase.storage
-        .from("uploads")
-        .upload(newName, fileBuffer, {
-          contentType: f.mimetype,
-        });
-
-      if (error) throw new Error("Gagal upload ke Supabase");
-
-      const publicUrl = supabase.storage
-        .from("uploads")
-        .getPublicUrl(newName).data.publicUrl;
-
-      uploadedFiles.push(publicUrl);
+    const jumlah = parseInt(fields.jumlah_tiket);
+    if (!jumlah) {
+      return res.status(400).json({ error: "Jumlah tiket tidak valid" });
     }
 
-    // SIMPAN KE NEON
-    const query = `
-      INSERT INTO pendaftaran (data_fields, file_urls)
-      VALUES ($1, $2)
-      RETURNING id
-    `;
+    const kode_unik = "TO-" + Date.now().toString(36).toUpperCase();
 
-    const result = await pool.query(query, [
-      fields,
-      uploadedFiles,
-    ]);
+    for (let i = 1; i <= jumlah; i++) {
+      const file = files[`kartu_pelajar_${i}`];
+
+      if (!file || !file.filepath) {
+        return res.status(400).json({
+          error: `File kartu pelajar peserta ${i} tidak ditemukan`,
+        });
+      }
+
+      const fileBuffer = fs.readFileSync(file.filepath);
+
+      const fileName = `${kode_unik}/peserta_${i}_${Date.now()}_${file.originalFilename}`;
+
+      const upload = await supabase.storage
+        .from("kartu-pelajar")
+        .upload(fileName, fileBuffer, {
+          contentType: file.mimetype,
+        });
+
+      if (upload.error) {
+        console.error("UPLOAD ERROR:", upload.error);
+        return res.status(500).json({ error: "Gagal upload ke Supabase" });
+      }
+
+      const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/kartu-pelajar/${fileName}`;
+
+      // Simpan ke Neon
+      await db.query(
+        `INSERT INTO peserta_tryout
+        (kode_unik, nomor_peserta, nama, asal_sekolah, no_wa, email, kartu_pelajar_url)
+        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [
+          kode_unik,
+          i,
+          fields[`nama_${i}`],
+          fields[`asal_sekolah_${i}`],
+          fields[`no_wa_${i}`],
+          fields[`email_${i}`],
+          fileUrl,
+        ]
+      );
+    }
 
     return res.status(200).json({
       status: "success",
-      message: "Berhasil dikirim!",
-      id: result.rows[0].id,
+      kode_unik,
     });
-
-  } catch (err) {
-    console.error("SERVER ERROR:", err);
-    return res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
+  } catch (e) {
+    console.error("SERVER ERROR:", e);
+    return res.status(500).json({ error: e.message });
   }
 }
