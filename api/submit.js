@@ -56,12 +56,16 @@ export default async function handler(req, res) {
 
       const fileBuffer = fs.readFileSync(file.filepath);
 
-      const fileName = `${kode_unik}/peserta_${i}_${Date.now()}_${file.originalFilename}`;
+      // Ganti nama file menjadi nama peserta, spasi diganti underscore
+      const pesertaNama = fields[`nama_${i}`].trim().replace(/\s+/g, "_");
+      const extension = file.originalFilename.split(".").pop();
+      const fileName = `${kode_unik}/${pesertaNama}.${extension}`;
 
       const upload = await supabase.storage
         .from("kartu-pelajar")
         .upload(fileName, fileBuffer, {
           contentType: file.mimetype,
+          upsert: true, // jika nama file sama, otomatis timpa
         });
 
       if (upload.error) {
