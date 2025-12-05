@@ -20,16 +20,16 @@ export default async function handler(req, res) {
 
       for (let i = 1; i <= pesertaCount; i++) {
         const file = files[`kartu_pelajar_${i}`];
-        const dataFile = fs.readFileSync(file.filepath);
-        const ext = file.originalFilename.split('.').pop();
+        if (!file) throw new Error(`File kartu pelajar ${i} tidak ditemukan`);
+        const fileData = fs.readFileSync(file.filepath);
+        const ext = file.originalFilename.split(".").pop();
         const fileName = `kartu_${Date.now()}_${i}.${ext}`;
 
         const { data, error: uploadError } = await supabase.storage
           .from("kartu_pelajar")
-          .upload(fileName, dataFile);
+          .upload(fileName, fileData);
 
         if (uploadError) throw uploadError;
-
         fileUrls.push(data.path);
       }
 
