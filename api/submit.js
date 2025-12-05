@@ -7,7 +7,8 @@ export const config = { api: { bodyParser: false } };
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ status: "error", message: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ status: "error", message: "Method not allowed" });
 
   const form = formidable({ multiples: true, keepExtensions: true });
 
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
           asal_sekolah: fields[`asal_sekolah_${i}`],
           no_wa: fields[`no_wa_${i}`],
           email: fields[`email_${i}`],
-          kartu_url: fileUrls[i-1],
+          kartu_url: fileUrls[i - 1],
           kode_unik: kodeUnik
         });
       }
