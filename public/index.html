@@ -60,20 +60,25 @@ body { margin:0; padding:0; }
 <section id="form_tiket">
   <div class="px-5">
     <h2 class="pt-5">Pembelian Tiket</h2>
-    <form class="pb-5 formtiket">
-      <div id="form-pembeli"></div>
-      <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fa-solid fa-ticket"></i></span>
-        <input name="jumlah_tiket" id="idJumlahTiket" type="number" min="1" max="5" class="form-control" placeholder="Jumlah Tiket (maks 5)" required/>
-      </div>
-      <div class="input-group mb-3">
-        <span class="input-group-text"><i class="fa-solid fa-money-check-dollar"></i></span>
-        <input id="idTotalHarga" type="text" class="form-control" placeholder="Total Harga" disabled/>
-      </div>
-      <p>*Pembayaran akan dikirimkan melalui nomor WhatsApp peserta 1.</p>
-      <div id="alertContainer"></div>
-      <button type="submit" class="btn btn-outline-secondary">Kirim</button>
     <form action="/api/submit" method="POST" enctype="multipart/form-data" class="pb-5 formtiket">
+    <div id="form-pembeli"></div>
+
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="fa-solid fa-ticket"></i></span>
+        <input name="jumlah_tiket" id="idJumlahTiket" type="number" min="1" max="5" class="form-control" required />
+    </div>
+
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="fa-solid fa-money-check-dollar"></i></span>
+        <input id="idTotalHarga" type="text" class="form-control" disabled />
+    </div>
+
+    <p>*Pembayaran akan dikirimkan melalui nomor WhatsApp peserta 1.</p>
+    <div id="alertContainer"></div>
+
+    <button type="submit" class="btn btn-outline-secondary">Kirim</button>
+</form>
+
   </div>
 </section>
 
